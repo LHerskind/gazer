@@ -1,0 +1,23 @@
+[package]
+name = "gazer"
+version = "0.1.0"
+edition = "2021"
+authors = ["LHerskind"]
+description = "Tool for gazing at the Ethereum blockchain"
+
+[dependencies]
+clap = { version = "*", features = ["derive"] }
+tokio = { version = "1.25.0", features = ["macros", "rt-multi-thread"] }
+ethers = { version = "2.0.4" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+microkv = "0.2.9"
+dashmap = { version = "5.4.0", features = ["serde"] }
+async-trait = "0.1.64"
+tokio-stream = "0.1.12"
+indicatif = "0.17.2"
+csv = "1.2.0"
+
+[[bin]]
+name = "gazer"
+path = "src/main.rs"
