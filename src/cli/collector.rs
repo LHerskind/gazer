@@ -33,11 +33,6 @@ pub enum CollectorCommands {
         tx_hash: String,
     },
     #[clap(
-        name = "populate-txs",
-        about = "Populates the database with transactions"
-    )]
-    PopulateTxs {},
-    #[clap(
         name = "populate-accounts",
         about = "Populates the database with code size data"
     )]
@@ -82,7 +77,6 @@ impl CollectorCommands {
                     println!("Transaction already in database");
                 };
             }
-            CollectorCommands::PopulateTxs {} => populate_txs(gazer, provider).await,
             CollectorCommands::PopulateAccounts { force } => {
                 populate_accounts(gazer, provider, force).await
             }
@@ -279,59 +273,6 @@ pub async fn add_accounts_by_involved<T: Into<NameOrAddress> + Send + Sync>(
         }
         Err(err) => panic!("Error committing to database: {}", err),
     }
-}
-
-pub async fn populate_txs(gazer: &GazerDB, provider: Provider<Http>) {
-    let mut tx_hashes = DashSet::new();
-    let accounts = match gazer.get_account_keys() {
-        Ok(accounts) => accounts,
-        Err(_) => panic!("Error getting account keys from database"),
-    };
-
-    for account in accounts {
-        let account: Account = match gazer.get_account(account) {
-            Ok(Some(account)) => account,
-            Ok(None) | Err(_) => panic!("Error getting account from database"),
-        };
-        tx_hashes.extend(account.tx_hashes.into_iter());
-    }
-
-    let mut tx_hashes = tx_hashes
-        .into_iter()
-        .filter(|tx_hash| match gazer.get_tx(*tx_hash) {
-            Ok(Some(_)) => false,
-            Ok(None) => true,
-            Err(_) => panic!("Error getting transaction from database"),
-        })
-        .collect::<Vec<TxHash>>();
-
-    let pb = ProgressBar::new(tx_hashes.len() as u64);
-    pb.set_style(
-        ProgressStyle::with_template(
-            "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} (eta: {eta})",
-        )
-        .unwrap()
-        .with_key("eta", |state: &ProgressState, w: &mut dyn Write| {
-            write!(w, "{:.1}s", state.eta().as_secs_f64()).unwrap()
-        })
-        .progress_chars("#>-"),
-    );
-
-    while !tx_hashes.is_empty() {
-        let to_consume = match tx_hashes.len() {
-            0..=250 => tx_hashes.len(),
-            _ => 250,
-        };
-        let hashes = tx_hashes.drain(..to_consume).collect::<Vec<TxHash>>();
-        fetch_and_add_tx(gazer, provider.clone(), hashes, Some(&pb)).await;
-    }
-
-    match gazer.commit() {
-        Ok(_) => (),
-        Err(_) => panic!("Error committing to database"),
-    }
-
-    pb.finish();
 }
 
 pub async fn populate_accounts(gazer: &GazerDB, provider: Provider<Http>, force: bool) {

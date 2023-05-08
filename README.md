@@ -3,6 +3,8 @@
 The Gazer is a small cli-tool for fetching, storing and exporting value-transfers (ERC20 and Eth) from the Ethereum blockchain. 
 It is written in Rust and uses the [Otterscan](https://github.com/wmitsuda/otterscan) RPC extensions to [Erigon](https://github.com/ledgerwatch/erigon) to fetch its data. 
 
+The output data can be used for grapf visualizations or whatever you got in mind.
+
 ## Features
 - Collect value transfers for a given address (incoming and outgoing calls as per `ots_search_transactions_after`)
   - Fetches eth transfers and erc20 transfers for the transactions fetched
@@ -30,7 +32,6 @@ export
 collect
   user
   tx
-  populate-txs
   populate-accounts
   update
 remove
@@ -46,10 +47,7 @@ gazer collect --rpc-url http://localhost:8545 user <ADDRESS>
 # Collect value transfer for a specific transaction
 gazer collect --rpc-url http://localhost:8545 tx <TX_HASH>
 
-# Populate database with missing content for transactions where we have "met" the hash
-gazer collect --rpc-url http://localhost:8545 populate-txs
-
-# Populate database with missing account details
+# Populate database with missing account details (codesize)
 gazer collect --rpc-url http://localhost:8545 populate-accounts
 
 # Export collected accounts to a CSV file
